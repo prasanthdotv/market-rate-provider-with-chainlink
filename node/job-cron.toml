@@ -1,0 +1,18 @@
+type = "cron"
+schemaVersion = 1
+name = "Cron Test"
+schedule        = "CRON_TZ=UTC @every 1m"
+maxTaskDuration = "0s"
+observationSource = """
+    fetch        [type="http" method=GET url="https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"]
+    parse        [type="jsonparse" path="USD" data="$(fetch)"]
+    multiply     [type="multiply" input="$(parse)" times=100]
+    encode_data  [type="ethabiencode" abi="(uint256 value)" data="{ \\"value\\": $(multiply) }"]
+    encode_tx    [type="ethabiencode"
+                  abi="fulfillCpi(bytes32 data)"
+                  data="{\\"data\\": $(encode_data)}"
+                 ]
+    submit_tx    [type="ethtx" to="0xcbB22D487cDC5315B761cc489a80B5637d972078" data="$(encode_tx)"]
+
+    fetch -> parse -> multiply -> encode_data -> encode_tx -> submit_tx
+"""

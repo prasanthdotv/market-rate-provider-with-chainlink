@@ -1,0 +1,18 @@
+type = "cron"
+schemaVersion = 1
+name = "CPI Provider Job"
+schedule        = "CRON_TZ=UTC @daily"
+maxTaskDuration = "0s"
+observationSource = """
+    fetch        [type="http" method=GET url="https://data.nasdaq.com/api/v3/datasets/RATEINF/CPI_EUR.json?api_key=<API_KEY>"]
+    parse        [type="jsonparse" path="dataset,data,0,1" data="$(fetch)"]
+    multiply     [type="multiply" input="$(parse)" times=1000000000000000000]
+    encode_data  [type="ethabiencode" abi="(uint256 value)" data="{ \\"value\\": $(multiply) }"]
+    encode_tx    [type="ethabiencode"
+                  abi="fulfillCpi(bytes32 data)"
+                  data="{\\"data\\": $(encode_data)}"
+                 ]
+    submit_tx    [type="ethtx" to="0x619117803C77fC639AFe1915F3998095Cdc2c7dE" data="$(encode_tx)"]
+
+    fetch -> parse -> multiply -> encode_data -> encode_tx -> submit_tx
+"""

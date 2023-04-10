@@ -1,0 +1,10 @@
+version: '3'
+services:
+  chainlink:
+    image: "smartcontract/chainlink:1.2.0"
+    container_name: chainlink_node
+    env_file: .env
+    network_mode: host
+    volumes:
+      - ./chainlink-volume/:/chainlink/
+    command: node start --password /chainlink/password.txt --api /chainlink/apicredentials.txt

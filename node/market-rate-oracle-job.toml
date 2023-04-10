@@ -1,0 +1,18 @@
+type = "cron"
+schemaVersion = 1
+name = "Market Rate Provider Job"
+schedule        = "CRON_TZ=UTC @daily"
+maxTaskDuration = "0s"
+observationSource = """
+    fetch        [type="http" method=GET url="http://api.currencylayer.com/live?access_key=<ACCESS_KEY>&currencies=EUR&format=1"]
+    parse        [type="jsonparse" path="quotes,USDEUR" data="$(fetch)"]
+    multiply     [type="multiply" input="$(parse)" times=1000000000000000000]
+    encode_data  [type="ethabiencode" abi="(uint256 value)" data="{ \\"value\\": $(multiply) }"]
+    encode_tx    [type="ethabiencode"
+                  abi="fulfillMarketRate(bytes32 data)"
+                  data="{\\"data\\": $(encode_data)}"
+                 ]
+    submit_tx    [type="ethtx" to="0x41548A2e73acF5f43a17Bb44c0058c0fEA338759" data="$(encode_tx)"]
+
+    fetch -> parse -> multiply -> encode_data -> encode_tx -> submit_tx
+"""

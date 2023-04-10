@@ -1,0 +1,20 @@
+version: '3'
+services:
+  pg_chainlink:
+    image: "postgres"
+    container_name: chainlink_postgres
+    network_mode: host
+    env_file:
+      - database.env
+    volumes:
+      - ./db/:/var/lib/postgressql/data/
+  chainlink:
+    image: "smartcontract/chainlink:1.2.0"
+    container_name: chainlink_node
+    env_file: .env
+    depends_on:
+      - pg_chainlink
+    network_mode: host
+    volumes:
+      - ./chainlink-volume/:/chainlink/
+    command: node start --password /chainlink/password.txt --api /chainlink/apicredentials.txt
